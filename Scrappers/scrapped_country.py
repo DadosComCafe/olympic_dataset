@@ -1,19 +1,8 @@
-from bs4 import BeautifulSoup
 from utils import get_request
+from base_scrape import BaseScrape
 
 
-class SrappedCountry:
-
-    def __init__(self, html_content:bytes) -> None:
-        self.html_content = html_content
-        self.soup = self.parse_html()
-        self.table = self.soup.find("table", attrs={"class": "table table-striped sortable"})
-        self.tr = self.table.find_all("tr")
-
-
-    def parse_html(self) -> BeautifulSoup:
-        return BeautifulSoup(self.html_content, "html.parser")
-
+class SrappedCountry(BaseScrape):
 
     def list_content(self) -> list[dict]:
         self.my_list = []
@@ -28,8 +17,9 @@ class SrappedCountry:
     
 
 if __name__ == "__main__":
-    import ipdb
-    ipdb.set_trace()
+    #import ipdb
+    #ipdb.set_trace()
     site = "https://www.olympedia.org/countries"
     html_content = get_request(site)
     country = SrappedCountry(html_content=html_content)
+    print(country.list_content())
