@@ -1,33 +1,38 @@
-import requests
-from bs4 import BeautifulSoup
-from csv import DictWriter
-
-def get_request(url: str="https://www.olympedia.org/sports") -> str:
-    return requests.get(url).text
-
-def parse_html(html_content: str) -> BeautifulSoup:
-    return BeautifulSoup(html_content, "html.parser")
-
-def export_to_csv(file_name: str, scrapped_data: dict):
-    with open(file_name, "a", encoding="utf-8") as arquivo:
-        my_writer = DictWriter(arquivo, fieldnames=scrapped_data.keys())
-        #my_writer.writeheader()
-        my_writer.writerow(scrapped_data)
+from Scrappers.scrapped_country import SrappedCountry
+from Scrappers.scrapped_sports import ScrappedSport
+from Scrappers.utils import get_request
+from pymongo import MongoClient
 
 
 if __name__ == "__main__":
-    html_content = get_request()
-    soup = parse_html(html_content=html_content)
-    print(soup)
+    site_countries = "https://www.olympedia.org/countries"
+    countries_content = get_request(url=site_countries)
+    country_obj = SrappedCountry(html_content=countries_content)
+    list_countries = country_obj.list_content()
 
-    my_table = soup.find("table", attrs={"class": "table table-striped sortable"})
+    site_sports = "https://www.olympedia.org/sports"
+    sports_content = get_request(url=site_sports)
+    sport_obj = ScrappedSport(html_content=sports_content)
+    list_sports = sport_obj.list_content()
+    myclient = MongoClient('mongodb://mongo:senha@localhost:27017/')
+    
+    mydb = myclient["olympic_dataset"]
+    mycollection = mydb["sports"]
+    for content in list_sports:
+        try:
+            mycollection.insert_one(content)
+        except Exception as e:
+            print(f"Erro na inserção do esporte: {content['esporte']}")
+            print(f"Erro: {e}")
+    print("Todos esportes inseridos corretamente!")
 
-    for row in my_table.find_all("tr"):
-        col = row.find_all("td")
-        if col:
-            sigla = str(col[0]).replace("<td>", "").replace("</td>", "")
-            esporte = str(col[1]).replace(f"""<td><a href="/sports/{sigla}">""", "").replace("</a></td>", "")
-            estacao = str(col[3]).replace("<td>", "").replace("</td>", "")
-            print(f"Sigla: {sigla}", f"Esporte: {esporte}", f"Estação: {estacao}")
-            dict_content = {"sigla": sigla, "esporte": esporte, "estação": estacao}
-            export_to_csv(file_name="esportes.csv", scrapped_data=dict_content)
+    mydb = myclient["olympic_dataset"]
+    mycollection = mydb["countries"]
+    for content in list_countries:
+        try:
+            mycollection.insert_one(content)
+        except Exception as e:
+            print(f"Erro na inserção do país: {content['pais']}")
+            print(f"Erro {e}")
+    print("Todos os países foram inseridos com sucesso!")
+    myclient.close()
