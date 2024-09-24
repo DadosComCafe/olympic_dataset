@@ -1,5 +1,4 @@
-from utils import get_request
-from base_scrape import BaseScrape
+from Scrappers.base_scrape import BaseScrape
 
 
 class SrappedCountry(BaseScrape):
@@ -17,6 +16,7 @@ class SrappedCountry(BaseScrape):
     
 
 if __name__ == "__main__":
+    from utils import get_request
     #import ipdb
     #ipdb.set_trace()
     site = "https://www.olympedia.org/countries"
